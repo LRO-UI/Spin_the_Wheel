@@ -414,11 +414,10 @@
     orchid:  ['#b26be8','#e84ba0','#6b8ee8','#8f4be8','#e86bd0','#4bc0c8'],
     decoNight: ['#a78bfa','#7c3aed','#6a35c9','#4c3fd0','#1d4ed8','#312e81']
   };
-  let activePalette = 'decoNight';
+  let activePalette = 'marquee';
 
   const wheelThemes = [
-    { id: 'deco', label: 'Art Deco Night',  swatch: 'linear-gradient(135deg, #a78bfa, #1d4ed8)', palette: 'decoNight' },
-    { id: 'og',   label: 'OG',              swatch: 'linear-gradient(135deg, #e8b84b, #d9654b)', palette: 'marquee' }
+    { id: 'deco', label: 'Art Deco Night',  swatch: 'linear-gradient(135deg, #a78bfa, #1d4ed8)', palette: 'marquee' }
   ];
   let activeWheelTheme = 'deco';
 
@@ -536,7 +535,7 @@
 
   function applyWheelTheme(id){
     activeWheelTheme = id;
-    document.body.dataset.wheelTheme = id === 'og' ? '' : id;
+    document.body.dataset.wheelTheme = id;
     const match = wheelThemes.find(t => t.id === id);
     if (match) activePalette = match.palette;
     themeRow.querySelectorAll('.palette-dot').forEach(d => d.classList.toggle('active', d.dataset.key === id));
