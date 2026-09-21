@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spin the Wheel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&family=Limelight&family=Josefin+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --bg: #14131f;
+    --panel: #1c1b2b;
+    --panel-edge: #2a2840;
+    --gold: #e8b84b;
+    --gold2: #d9654b;
+    --ink: #f3efe6;
+    --ink-soft: #a29db3;
+    --line: #322f47;
+    --pointer: #e8b84b;
+    --font-display: 'Fraunces', serif;
+    --font-ui: 'Space Grotesk', system-ui, sans-serif;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); height: 100%; }
+  * { box-sizing: border-box; }
+
+  /* ---- Art Deco Night theme ---- */
+  body[data-wheel-theme="deco"] {
+    --bg: #0b0d16;
+    --panel: #12151f;
+    --panel-edge: #232838;
+    --gold: #7c3aed;
+    --gold2: #1d4ed8;
+    --ink: #e7ecf5;
+    --ink-soft: #5b6478;
+    --line: #232838;
+    --pointer: #a78bfa;
+    --font-display: 'Limelight', serif;
+    --font-ui: 'Josefin Sans', sans-serif;
+  }
+  body[data-wheel-theme="deco"] #wheel {
+    box-shadow: 0 0 0 3px var(--panel-edge), 0 0 0 6px var(--gold2),
+      0 0 0 9px var(--panel-edge), 0 20px 50px rgba(0,0,0,.55);
+  }
+  body[data-wheel-theme="deco"] .hub { background: var(--gold); box-shadow: 0 0 0 3px var(--panel), 0 0 0 5px var(--gold2), 0 4px 12px rgba(0,0,0,.5); }
+  body[data-wheel-theme="deco"] .spin-btn { border-radius: 3px; box-shadow: 0 0 0 2px var(--gold2), 0 8px 20px rgba(124,58,237,.25); letter-spacing: .04em; }
+  body[data-wheel-theme="deco"] .winner-slot { border-radius: 3px; outline: 1px solid var(--gold2); outline-offset: 4px; }
+  body[data-wheel-theme="deco"] .tool-btn, body[data-wheel-theme="deco"] .seg-row { border-radius: 3px; }
+  body[data-wheel-theme="deco"] .winner-name { letter-spacing: .02em; }
+
+
+  /* ---- Art Deco: text column ---- */
+  body[data-wheel-theme="deco"] .deco-only { display: block; }
+  .deco-only { display: none; }
+
+  body[data-wheel-theme="deco"] .rail { position: relative; }
+  /* double-line frame */
+  body[data-wheel-theme="deco"] .rail::before,
+  body[data-wheel-theme="deco"] .rail::after {
+    content: ''; position: absolute; pointer-events: none; z-index: 6;
+  }
+  body[data-wheel-theme="deco"] .rail::before {
+    inset: 10px; border: 1px solid rgba(231,236,245,.75);
+  }
+  body[data-wheel-theme="deco"] .rail::after {
+    inset: 15px; border: 1px solid rgba(231,236,245,.28);
+  }
+  /* corner diamonds */
+  .rail-d {
+    position: absolute; width: 12px; height: 12px; z-index: 7; pointer-events: none;
+    background: var(--gold2); border: 2px solid var(--bg);
+    transform: translate(-50%,-50%) rotate(45deg);
+    box-shadow: 0 0 0 1px rgba(231,236,245,.6);
+  }
+  .rail-d.tl { top: 10px; left: 10px; }
+  .rail-d.tr { top: 10px; left: calc(100% - 10px); }
+  .rail-d.bl { top: calc(100% - 10px); left: 10px; }
+  .rail-d.br { top: calc(100% - 10px); left: calc(100% - 10px); }
+
+  body[data-wheel-theme="deco"] .toolbar {
+    padding: 28px 30px 20px;
+    border-bottom: 4px double rgba(29,78,216,.7);
+  }
+  body[data-wheel-theme="deco"] .panel-body { padding: 26px 30px 34px; }
+  body[data-wheel-theme="deco"] .popover {
+    border-radius: 0; border: 1px solid var(--gold2);
+    box-shadow: inset 0 0 0 4px var(--panel), inset 0 0 0 5px var(--panel-edge), 0 12px 30px rgba(0,0,0,.5);
+    padding: 20px;
+  }
+
+  /* corner brackets on buttons and rows */
+  body[data-wheel-theme="deco"] .tool-btn,
+  body[data-wheel-theme="deco"] .seg-row {
+    --c: var(--pointer);
+    border: 1px solid var(--line);
+    background:
+      linear-gradient(var(--c),var(--c)) top left / 9px 1px no-repeat,
+      linear-gradient(var(--c),var(--c)) top left / 1px 9px no-repeat,
+      linear-gradient(var(--c),var(--c)) top right / 9px 1px no-repeat,
+      linear-gradient(var(--c),var(--c)) top right / 1px 9px no-repeat,
+      linear-gradient(var(--c),var(--c)) bottom left / 9px 1px no-repeat,
+      linear-gradient(var(--c),var(--c)) bottom left / 1px 9px no-repeat,
+      linear-gradient(var(--c),var(--c)) bottom right / 9px 1px no-repeat,
+      linear-gradient(var(--c),var(--c)) bottom right / 1px 9px no-repeat,
+      var(--panel);
+    box-shadow: inset 0 0 0 3px var(--panel), inset 0 0 0 4px var(--panel-edge);
+  }
+  body[data-wheel-theme="deco"] .tool-btn {
+    text-transform: uppercase; letter-spacing: .14em; font-size: .72rem; font-weight: 600;
+    padding: 10px 16px;
+  }
+  body[data-wheel-theme="deco"] .tool-btn:hover { --c: #fff; border-color: var(--gold2); }
+  body[data-wheel-theme="deco"] .seg-row { padding: 9px 12px; }
+  body[data-wheel-theme="deco"] .swatch { border-radius: 0; transform: rotate(45deg) scale(.8); border-color: rgba(231,236,245,.5); }
+  body[data-wheel-theme="deco"] .seg-del { border-radius: 0; }
+
+  /* winner box */
+  body[data-wheel-theme="deco"] .winner-slot {
+    position: relative;
+    border: 1px solid var(--pointer);
+    outline: none;
+    padding: 34px 20px 30px;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(124,58,237,.22), transparent 65%),
+      var(--panel);
+    box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px var(--gold2),
+                inset 0 0 0 5px var(--panel), inset 0 0 0 6px var(--panel-edge);
+  }
+  body[data-wheel-theme="deco"] .winner-label {
+    text-transform: uppercase; letter-spacing: .3em; font-size: .68rem;
+  }
+  .winner-slot .wc {
+    position: absolute; width: 9px; height: 9px; background: var(--pointer);
+    transform: translate(-50%,-50%) rotate(45deg); border: 2px solid var(--bg);
+    box-sizing: content-box;
+  }
+  .winner-slot .wc.tl { top: 0; left: 0; } .winner-slot .wc.tr { top: 0; left: 100%; }
+  .winner-slot .wc.bl { top: 100%; left: 0; } .winner-slot .wc.br { top: 100%; left: 100%; }
+  .deco-rule {
+    display: none; align-items: center; gap: 10px; margin: 14px auto 4px; width: 78%;
+  }
+  body[data-wheel-theme="deco"] .deco-rule { display: flex; }
+  .deco-rule i { flex: 1; height: 3px; border-top: 1px solid var(--pointer); border-bottom: 1px solid var(--gold2); }
+  .deco-rule b { width: 8px; height: 8px; background: var(--gold2); transform: rotate(45deg); box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--pointer); }
+
+  /* section titles: diamond + double rule */
+  body[data-wheel-theme="deco"] .section-title {
+    display: flex; align-items: center; gap: 12px;
+    text-transform: uppercase; letter-spacing: .3em; font-size: .68rem; color: var(--ink);
+  }
+  body[data-wheel-theme="deco"] .section-title::before {
+    content: ''; width: 7px; height: 7px; background: var(--pointer); transform: rotate(45deg); flex: none;
+  }
+  body[data-wheel-theme="deco"] .section-title::after {
+    content: ''; flex: 1; height: 3px;
+    border-top: 1px solid var(--pointer); border-bottom: 1px solid var(--gold2);
+  }
+  body[data-wheel-theme="deco"] .history-item { border-bottom: 3px double var(--line); }
+  body[data-wheel-theme="deco"] .history-item span:first-child::before {
+    content: ''; display: inline-block; width: 5px; height: 5px; margin-right: 10px;
+    background: var(--gold2); transform: rotate(45deg); vertical-align: middle;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14131f; --panel: #1c1b2b; --panel-edge: #2a2840;
+      --ink: #f3efe6; --ink-soft: #a29db3; --line: #322f47;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14131f; --panel: #1c1b2b; --panel-edge: #2a2840;
+    --ink: #f3efe6; --ink-soft: #a29db3; --line: #322f47;
+  }
+
+  body {
+    margin: 0; height: 100%; min-height: 100vh;
+    background: var(--bg); color: var(--ink);
+    font-family: var(--font-ui);
+    display: flex; flex-direction: column;
+    transition: background .2s ease, color .2s ease;
+  }
+
+  .app {
+    display: flex; flex: 1; min-height: 100vh;
+    flex-wrap: wrap;
+  }
+
+  /* Wheel side ~60% */
+  .stage {
+    flex: 3 1 500px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 32px 20px calc(32px + env(safe-area-inset-bottom, 0px));
+    position: relative;
+    border-right: 1px solid var(--line);
+    min-width: 320px;
+  }
+  .wheel-wrap {
+    position: relative;
+    width: min(72vw, 68vh, 560px);
+    aspect-ratio: 1 / 1;
+    max-width: 560px;
+  }
+  .pointer {
+    position: absolute; top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 28px solid var(--pointer);
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
+    z-index: 3;
+  }
+  #wheel { position: relative; z-index: 1; width: 100%; height: 100%; border-radius: 50%; display: block;
+    box-shadow: 0 0 0 6px var(--panel-edge), 0 20px 50px rgba(0,0,0,.45); }
+  .hub {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: 15%; aspect-ratio: 1; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 4px 12px rgba(0,0,0,.4), inset 0 -3px 6px rgba(0,0,0,.2);
+    z-index: 2;
+  }
+  .spin-btn {
+    margin-top: 30px;
+    font-family: var(--font-display);
+    font-size: 1.15rem; font-weight: 600; letter-spacing: .01em;
+    color: var(--bg); background: var(--gold);
+    border: none; border-radius: 999px;
+    padding: 14px 44px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+    box-shadow: 0 8px 20px rgba(232,184,75,.25);
+  }
+  .spin-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(232,184,75,.35); }
+  .spin-btn:active { transform: translateY(0); }
+  .spin-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* Winner column ~40% */
+  .rail {
+    flex: 2 1 320px;
+    display: flex; flex-direction: column;
+    min-width: 280px;
+    max-height: 100vh;
+  }
+
+  .toolbar {
+    display: flex; gap: 8px; padding: 18px 20px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+    position: sticky; top: env(safe-area-inset-top, 0px);
+    background: var(--bg); z-index: 4;
+  }
+  .tool-btn {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--panel); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 9px 14px; font-family: inherit; font-size: .85rem; font-weight: 500;
+    cursor: pointer; transition: border-color .15s ease, background .15s ease;
+  }
+  .tool-btn:hover { border-color: var(--gold); background: var(--panel-edge); }
+  .tool-btn svg { width: 15px; height: 15px; flex: none; }
+
+  .panel-body { padding: 22px 20px; overflow-y: auto; flex: 1; }
+
+  .winner-slot {
+    text-align: center;
+    padding: 26px 16px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--panel);
+    margin-bottom: 24px;
+  }
+  .winner-label {
+    font-size: .75rem; color: var(--ink-soft); letter-spacing: .04em;
+  }
+  .winner-name {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    font-weight: 700;
+    margin: 10px 0 2px;
+    min-height: 1.3em;
+    color: var(--gold);
+  }
+  .winner-name.reveal { animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop { 0% { transform: scale(.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .winner-hint { font-size: .8rem; color: var(--ink-soft); }
+
+  .section-title {
+    font-size: .75rem; color: var(--ink-soft); letter-spacing: .04em;
+    margin: 0 0 12px;
+  }
+
+  .seg-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 7px 8px;
+  }
+  .swatch {
+    width: 20px; height: 20px; border-radius: 6px; flex: none;
+    border: 1px solid rgba(255,255,255,.15);
+    cursor: pointer;
+  }
+  .seg-row input[type="text"] {
+    flex: 1; min-width: 0;
+    background: transparent; border: none; color: var(--ink);
+    font-family: inherit; font-size: .9rem; padding: 4px 2px;
+  }
+  .seg-row input[type="text"]:focus { outline: none; }
+  .seg-del {
+    flex: none; background: none; border: none; color: var(--ink-soft);
+    cursor: pointer; font-size: 1rem; line-height: 1; padding: 4px 6px;
+    border-radius: 6px;
+  }
+  .seg-del:hover { color: #e85b5b; background: rgba(232,91,91,.1); }
+
+  .history { margin-top: 22px; }
+  .history-item {
+    display: flex; justify-content: space-between;
+    font-size: .82rem; color: var(--ink-soft);
+    padding: 7px 0; border-bottom: 1px solid var(--line);
+  }
+  .history-item span:first-child { color: var(--ink); }
+  .empty-hist { font-size: .82rem; color: var(--ink-soft); }
+
+  /* style popover */
+  .popover {
+    position: absolute; top: 60px; right: 20px;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 14px; z-index: 10;
+    box-shadow: 0 12px 30px rgba(0,0,0,.4);
+    display: none; min-width: 200px;
+  }
+  .popover.open { display: block; }
+  .popover h4 { margin: 0 0 10px; font-size: .8rem; color: var(--ink-soft); font-weight: 500; }
+  .palette-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .palette-dot {
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent;
+  }
+  .palette-dot.active { border-color: var(--ink); }
+
+  @media (max-width: 760px) {
+    .app { flex-direction: column; }
+    .stage { border-right: none; border-bottom: 1px solid var(--line); }
+    .rail { max-height: none; }
+  }
+</style>
+</head>
+<body data-wheel-theme="deco">
+  <div class="app">
+    <div class="stage">
+      <div class="wheel-wrap">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="560" height="560"></canvas>
+        <div class="hub"></div>
+      </div>
+      <button class="spin-btn" id="spinBtn">Spin the wheel</button>
+    </div>
+
+    <div class="rail">
+      <i class="rail-d tl deco-only"></i><i class="rail-d tr deco-only"></i><i class="rail-d bl deco-only"></i><i class="rail-d br deco-only"></i>
+      <div class="toolbar">
+        <button class="tool-btn" id="addBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 4v12M4 10h12"/></svg>
+          Add
+        </button>
+        <button class="tool-btn" id="removeBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 10h12"/></svg>
+          Remove
+        </button>
+        <button class="tool-btn" id="styleBtn">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10" cy="10" r="6.5"/><path d="M10 6.5v0M13.5 10h0M10 13.5v0M6.5 10h0"/></svg>
+          Style
+        </button>
+        <div class="popover" id="stylePopover">
+          <h4>Theme</h4>
+          <div class="palette-row" id="themeRow" style="margin-bottom:16px;"></div>
+          <h4>Wheel palette</h4>
+          <div class="palette-row" id="paletteRow"></div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="winner-slot">
+          <i class="wc tl deco-only"></i><i class="wc tr deco-only"></i><i class="wc bl deco-only"></i><i class="wc br deco-only"></i>
+          <div class="winner-label">This round's winner</div>
+          <div class="deco-rule"><i></i><b></b><i></i></div>
+          <div class="winner-name" id="winnerName">—</div>
+          <div class="winner-hint" id="winnerHint">Spin to find out</div>
+        </div>
+
+        <div class="section-title">Segments</div>
+        <div id="segList"></div>
+
+        <div class="history">
+          <div class="section-title">History</div>
+          <div id="historyList"><div class="empty-hist">No spins yet.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const palettes = {
+    marquee: ['#e8b84b','#d9654b','#4b8fe8','#6bbf8e','#b26be8','#e84ba0','#4bc0c8','#c9a24b'],
+    ember:   ['#e8734b','#e8b84b','#c84b4b','#8f4be8','#e84b7c','#4b6be8'],
+    forest:  ['#6bbf8e','#4b8f6b','#a2c94b','#4b8fe8','#c9a24b','#8ec9a2'],
+    orchid:  ['#b26be8','#e84ba0','#6b8ee8','#8f4be8','#e86bd0','#4bc0c8'],
+    decoNight: ['#a78bfa','#7c3aed','#6a35c9','#4c3fd0','#1d4ed8','#312e81']
+  };
+  let activePalette = 'decoNight';
+
+  const wheelThemes = [
+    { id: 'deco', label: 'Art Deco Night',  swatch: 'linear-gradient(135deg, #a78bfa, #1d4ed8)', palette: 'decoNight' },
+    { id: 'og',   label: 'OG',              swatch: 'linear-gradient(135deg, #e8b84b, #d9654b)', palette: 'marquee' }
+  ];
+  let activeWheelTheme = 'deco';
+
+  let segments = [
+    { label: 'Pizza', color: null },
+    { label: 'Sushi', color: null },
+    { label: 'Tacos', color: null },
+    { label: 'Salad', color: null },
+    { label: 'Burgers', color: null },
+    { label: 'Ramen', color: null },
+  ];
+
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const segList = document.getElementById('segList');
+  const winnerName = document.getElementById('winnerName');
+  const winnerHint = document.getElementById('winnerHint');
+  const historyList = document.getElementById('historyList');
+  const spinBtn = document.getElementById('spinBtn');
+
+  let rotation = 0;
+  let spinning = false;
+  let history = [];
+
+  function colorFor(i){
+    const pal = palettes[activePalette];
+    return segments[i].color || pal[i % pal.length];
+  }
+
+  function drawWheel(){
+    const n = segments.length;
+    const cx = canvas.width/2, cy = canvas.height/2, r = canvas.width/2 - 6;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if (n === 0) return;
+    const step = (Math.PI*2)/n;
+    for (let i=0;i<n;i++){
+      const start = rotation + i*step;
+      const end = start + step;
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,start,end);
+      ctx.closePath();
+      ctx.fillStyle = colorFor(i);
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(cx,cy);
+      ctx.rotate(start + step/2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(20,19,31,.88)';
+      ctx.font = '600 20px "Space Grotesk", sans-serif';
+      const label = segments[i].label || '—';
+      ctx.fillText(label.length > 14 ? label.slice(0,13)+'…' : label, r - 24, 7);
+      ctx.restore();
+    }
+  }
+
+  function renderSegList(){
+    segList.innerHTML = '';
+    segments.forEach((seg, i) => {
+      const row = document.createElement('div');
+      row.className = 'seg-row';
+      row.innerHTML = `
+        <div class="swatch" style="background:${colorFor(i)}" data-i="${i}"></div>
+        <input type="text" value="${seg.label.replace(/"/g,'&quot;')}" data-i="${i}" maxlength="18">
+        <button class="seg-del" data-i="${i}" aria-label="Remove segment">✕</button>
+      `;
+      segList.appendChild(row);
+    });
+
+    segList.querySelectorAll('input[type="text"]').forEach(inp => {
+      inp.addEventListener('input', e => {
+        segments[e.target.dataset.i].label = e.target.value || 'Untitled';
+        drawWheel();
+      });
+    });
+    segList.querySelectorAll('.seg-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const i = +e.currentTarget.dataset.i;
+        if (segments.length <= 2) return;
+        segments.splice(i,1);
+        renderSegList();
+        drawWheel();
+      });
+    });
+    segList.querySelectorAll('.swatch').forEach(sw => {
+      sw.addEventListener('click', e => {
+        const i = +e.currentTarget.dataset.i;
+        const pal = palettes[activePalette];
+        segments[i].color = pal[(pal.indexOf(colorFor(i))+1) % pal.length];
+        renderSegList();
+        drawWheel();
+      });
+    });
+  }
+
+  document.getElementById('addBtn').addEventListener('click', () => {
+    if (segments.length >= 12) return;
+    segments.push({ label: 'Option ' + (segments.length+1), color: null });
+    renderSegList();
+    drawWheel();
+  });
+
+  document.getElementById('removeBtn').addEventListener('click', () => {
+    if (segments.length <= 2) return;
+    segments.pop();
+    renderSegList();
+    drawWheel();
+  });
+
+  const styleBtn = document.getElementById('styleBtn');
+  const stylePopover = document.getElementById('stylePopover');
+  const paletteRow = document.getElementById('paletteRow');
+  const themeRow = document.getElementById('themeRow');
+
+  function applyWheelTheme(id){
+    activeWheelTheme = id;
+    document.body.dataset.wheelTheme = id === 'og' ? '' : id;
+    const match = wheelThemes.find(t => t.id === id);
+    if (match) activePalette = match.palette;
+    themeRow.querySelectorAll('.palette-dot').forEach(d => d.classList.toggle('active', d.dataset.key === id));
+    paletteRow.querySelectorAll('.palette-dot').forEach(d => d.classList.toggle('active', d.dataset.key === activePalette));
+    renderSegList();
+    drawWheel();
+  }
+
+  wheelThemes.forEach(t => {
+    const dot = document.createElement('div');
+    dot.className = 'palette-dot' + (t.id === activeWheelTheme ? ' active' : '');
+    dot.style.background = t.swatch;
+    dot.title = t.label;
+    dot.dataset.key = t.id;
+    dot.addEventListener('click', () => applyWheelTheme(t.id));
+    themeRow.appendChild(dot);
+  });
+  Object.keys(palettes).forEach(key => {
+    const dot = document.createElement('div');
+    dot.className = 'palette-dot' + (key===activePalette ? ' active' : '');
+    dot.style.background = `linear-gradient(135deg, ${palettes[key][0]}, ${palettes[key][1]})`;
+    dot.dataset.key = key;
+    dot.addEventListener('click', () => {
+      activePalette = key;
+      paletteRow.querySelectorAll('.palette-dot').forEach(d => d.classList.toggle('active', d.dataset.key===key));
+      renderSegList();
+      drawWheel();
+    });
+    paletteRow.appendChild(dot);
+  });
+  styleBtn.addEventListener('click', () => stylePopover.classList.toggle('open'));
+  document.addEventListener('click', e => {
+    if (!stylePopover.contains(e.target) && e.target !== styleBtn && !styleBtn.contains(e.target)) {
+      stylePopover.classList.remove('open');
+    }
+  });
+
+  function easeOutCubic(t){ return 1 - Math.pow(1-t, 3); }
+
+  spinBtn.addEventListener('click', () => {
+    if (spinning || segments.length === 0) return;
+    spinning = true;
+    spinBtn.disabled = true;
+    winnerHint.textContent = 'Spinning…';
+    winnerName.classList.remove('reveal');
+    winnerName.textContent = '…';
+
+    const n = segments.length;
+    const step = (Math.PI*2)/n;
+    const extraTurns = 5 + Math.random()*3;
+    const randomOffset = Math.random()*Math.PI*2;
+    const startRotation = rotation;
+    const targetRotation = startRotation + extraTurns*Math.PI*2 + randomOffset;
+    const duration = 4200;
+    const t0 = performance.now();
+
+    function frame(now){
+      const t = Math.min(1, (now - t0)/duration);
+      const eased = easeOutCubic(t);
+      rotation = startRotation + (targetRotation - startRotation)*eased;
+      drawWheel();
+      if (t < 1){
+        requestAnimationFrame(frame);
+      } else {
+        spinning = false;
+        spinBtn.disabled = false;
+        const normalized = ((rotation % (Math.PI*2)) + Math.PI*2) % (Math.PI*2);
+        const pointerAngle = ((Math.PI*2) - normalized + (Math.PI*2 - Math.PI/2)) % (Math.PI*2);
+        const idx = Math.floor(pointerAngle / step) % n;
+        const winner = segments[idx].label;
+        winnerName.textContent = winner;
+        winnerName.classList.add('reveal');
+        winnerHint.textContent = 'Landed just now';
+        history.unshift({ label: winner, time: new Date() });
+        renderHistory();
+      }
+    }
+    requestAnimationFrame(frame);
+  });
+
+  function renderHistory(){
+    if (history.length === 0){
+      historyList.innerHTML = '<div class="empty-hist">No spins yet.</div>';
+      return;
+    }
+    historyList.innerHTML = history.slice(0,8).map(h => `
+      <div class="history-item"><span>${h.label}</span><span>${h.time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span></div>
+    `).join('');
+  }
+
+  renderSegList();
+  drawWheel();
+})();
+</script>
+</body>
+</html>
